@@ -1,13 +1,17 @@
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Windows;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
-    private Rigidbody2D rigidbody; 
-    public float movespeed = 5f;
-    public float jumpForce = 2f;
+    private Rigidbody2D rigidbody;
+    private const float PlayerSpeed = 5f;
+    public float movespeed = PlayerSpeed;
+    public float jumpForce = 7.5f;
+    public int Jumps = 1;
+    private bool isRunning;
+    private bool canJump = true;
     private bool _isFacingRight = true;
     private TouchingDirrections touchingDirrections;
     public bool IsFacingRight
@@ -25,23 +29,7 @@ public class PlayerController : MonoBehaviour
             _isFacingRight = value;
         }
     }
-    // Start is called before the first frame update
-    /*void Start()
-    {
-        Debug.Log(transform.position);
-        Debug.LogError(transform.rotation);
-    }*/
-
-    // Update is called once per frame
     private Vector2 movementDirection = Vector2.zero;
-    /*private void Update()
-    {
-        float inputx = Input.GetAxis("Horizontal");
-        Vector2 movementDirection = new Vector2(inputx, 0);
-        transform.Translate(movementDirection * movespeed * Time.deltaTime);
-        Debug.Log(inputx);
-
-    }*/
     private void Awake()
     {
         rigidbody = GetComponent<Rigidbody2D>();
@@ -50,20 +38,56 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         rigidbody.velocity = new Vector2(movementDirection.x * movespeed, rigidbody.velocity.y);
-        //rigidbody.AddForce(rigidbody.velocity);
+        rigidbody.AddForce(rigidbody.velocity);
+        
     }
     public void OnMove(InputAction.CallbackContext context)
     {
-        movementDirection = context.ReadValue<Vector2>();
+        Move(context);
         SetFacingDirrection(movementDirection);
+    }
+    private void Move(InputAction.CallbackContext context)
+    {
+        movementDirection = context.ReadValue<Vector2>();
     }
     public void OnJump(InputAction.CallbackContext context)
     {
         if (touchingDirrections.IsPlatform)
         {
+            StartCoroutine(DisableJumps(0.25f));
+            Jumps = 1;
             //rigidbody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
         }
+        else if (!touchingDirrections.IsPlatform && Jumps > 0 && canJump)
+        {
+            StartCoroutine(DisableJumps(0.25f));
+            //rigidbody.AddForce(2 * Vector2.up * jumpForce, ForceMode2D.Impulse);
+            rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
+            Jumps--;
+        }
+    }
+    public void OnSprint(InputAction.CallbackContext context)
+    {
+        isRunning = context.ReadValueAsButton();
+        if (isRunning == true)
+        {
+            Run();
+        }
+        else if(isRunning == false)
+        {
+            movespeed = PlayerSpeed;
+        }
+    }
+    private void Run()
+    {
+        movespeed = PlayerSpeed * 2;
+    }
+    private IEnumerator DisableJumps(float time)
+    {
+        canJump = false;
+        yield return new WaitForSeconds(time);
+        canJump = true;
     }
     private void SetFacingDirrection(Vector2 dirrection)
     {
