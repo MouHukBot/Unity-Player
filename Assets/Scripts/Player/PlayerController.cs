@@ -1,19 +1,26 @@
 
 using System.Collections;
+using UnityEditor.Experimental;
 using UnityEngine;
 using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
     private Rigidbody2D rigidbody;
-    private const float PlayerSpeed = 5f;
-    public float movespeed = PlayerSpeed;
+    private const float RunSpeed = 7.5f;
+    private float _movespeed = 5f;
     public float jumpForce = 7.5f;
+    private float _currentSpeed;
+    public Vector2 FlyVector;
     public int Jumps = 1;
-    private bool isRunning;
     private bool canJump = true;
     private bool _isFacingRight = true;
     private TouchingDirrections touchingDirrections;
+    public bool IsMoving = false;
+    public bool IsRunning = false;
+    private Vector2 moveInput;
+    private AnimatorContoller animatorContoller;
+    
     public bool IsFacingRight
     {
         get
@@ -34,17 +41,34 @@ public class PlayerController : MonoBehaviour
     {
         rigidbody = GetComponent<Rigidbody2D>();
         touchingDirrections = GetComponent<TouchingDirrections>();
+        animatorContoller = GetComponent<AnimatorContoller>();
+        _currentSpeed = _movespeed;
     }
     private void FixedUpdate()
     {
-        rigidbody.velocity = new Vector2(movementDirection.x * movespeed, rigidbody.velocity.y);
+        rigidbody.velocity = new Vector2(movementDirection.x * _currentSpeed, rigidbody.velocity.y);
         rigidbody.AddForce(rigidbody.velocity);
-        
-    }
+        FlyVector.y = rigidbody.velocity.y;
+        //Debug.Log(IsRunning);
+        //Debug.Log(IsMoving);
+        //Debug.Log(touchingDirrections.IsPlatform);
+            }
     public void OnMove(InputAction.CallbackContext context)
     {
         Move(context);
         SetFacingDirrection(movementDirection);
+        /*if(movementDirection.x!=0)
+        {
+            animatorContoller.Flip(movementDirection.x);
+        }*/
+        if(movementDirection != Vector2.zero)
+        {
+            IsMoving = true;
+        }
+        else
+        {
+            IsMoving = false;
+        }
     }
     private void Move(InputAction.CallbackContext context)
     {
@@ -69,19 +93,19 @@ public class PlayerController : MonoBehaviour
     }
     public void OnSprint(InputAction.CallbackContext context)
     {
-        isRunning = context.ReadValueAsButton();
-        if (isRunning == true)
+        IsRunning = context.ReadValueAsButton();
+        if (IsRunning == true)
         {
             Run();
         }
-        else if(isRunning == false)
+        else if(IsRunning == false)
         {
-            movespeed = PlayerSpeed;
+            _currentSpeed = _movespeed;
         }
     }
     private void Run()
     {
-        movespeed = PlayerSpeed * 2;
+        _currentSpeed = RunSpeed;
     }
     private IEnumerator DisableJumps(float time)
     {
