@@ -1,5 +1,6 @@
 
 using System.Collections;
+using TMPro;
 using UnityEditor.Experimental;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,6 +13,8 @@ public class PlayerController : MonoBehaviour
     public float jumpForce = 7.5f;
     private float _currentSpeed;
     public Vector2 FlyVector;
+    [SerializeField]
+    private TextMeshProUGUI CoinsText;
     public int Jumps = 1;
     private bool canJump = true;
     private bool _isFacingRight = true;
@@ -19,8 +22,13 @@ public class PlayerController : MonoBehaviour
     public bool IsMoving = false;
     public bool IsRunning = false;
     private Vector2 moveInput;
+    private int coins = 3;
     private AnimatorContoller animatorContoller;
-    
+
+    private void Start()
+    {
+        CoinsGui(coins);
+    }
     public bool IsFacingRight
     {
         get
@@ -42,10 +50,12 @@ public class PlayerController : MonoBehaviour
         rigidbody = GetComponent<Rigidbody2D>();
         touchingDirrections = GetComponent<TouchingDirrections>();
         animatorContoller = GetComponent<AnimatorContoller>();
+        //CoinsText = GetComponent<TextMeshProUGUI>();
         _currentSpeed = _movespeed;
     }
     private void FixedUpdate()
     {
+        //CoinsGui(coins);
         rigidbody.velocity = new Vector2(movementDirection.x * _currentSpeed, rigidbody.velocity.y);
         rigidbody.AddForce(rigidbody.velocity);
         FlyVector.y = rigidbody.velocity.y;
@@ -73,6 +83,15 @@ public class PlayerController : MonoBehaviour
     private void Move(InputAction.CallbackContext context)
     {
         movementDirection = context.ReadValue<Vector2>();
+    }
+    public void AddCoins(int value)
+    {
+        coins = coins + value;
+        CoinsGui(coins);
+    }
+    private void CoinsGui(int coins)
+    {
+        CoinsText.text = $"Coins:{coins}";
     }
     public void OnJump(InputAction.CallbackContext context)
     {
